@@ -9,7 +9,7 @@ from tensorflow.keras.losses import MeanAbsoluteError, MeanSquaredError
 from data.data_loaders import load_test_images
 from data.data_utils import downsample_images
 from models.edsr import EDSR
-from models.srgan import SRResNet
+from models.srgan import SRDescriminator, SRResNet
 from train import Trainer
 
 # Define the Keras TensorBoard callback.
@@ -21,7 +21,7 @@ tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir, write_graph=T
 # =========================#
 
 # Create Model
-sr_resnet_model = EDSR()
+sr_resnet_model = SRDescriminator()
 sr_resnet_model.compile(
     optimizer="adam", loss=MeanAbsoluteError(), metrics=["accuracy"]
 )
@@ -40,7 +40,9 @@ hr_imgs = (hr_imgs.numpy() - 127.5) / 127.5
 lr_imgs = tf.convert_to_tensor(lr_imgs, np.float32)
 lr_imgs = (lr_imgs.numpy() - 127.5) / 127.5
 
+one = tf.convert_to_tensor([1], np.float32)
+
 # Fit model
 sr_resnet_model.fit(
-    lr_imgs, hr_imgs, batch_size=1, epochs=2, callbacks=[tensorboard_callback]
+    lr_imgs, one, batch_size=1, epochs=2, callbacks=[tensorboard_callback]
 )

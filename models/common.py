@@ -34,7 +34,7 @@ class DescriminatorBlock(tf.Module):
 
         block_layers.append(activation)
 
-        self.block = keras.Sequential(*block_layers)
+        self.block = keras.Sequential(layers=block_layers)
 
     def __call__(self, inputs) -> Any:
         return self.block(inputs)

@@ -1,6 +1,7 @@
 from typing import Any
 import tensorflow as tf
 import tensorflow.keras as keras
+from tensorflow.python.keras.layers.core import Flatten
 
 from models.common import (
     DescriminatorBlock,
@@ -99,7 +100,7 @@ class SRDescriminator(SRModel):
                 k_size=3,
                 norm=i != 1,
                 strides=((i + 1) % 2) + 1,
-                name="body_descriminator_{i}",
+                name=f"body_descriminator_{i}",
                 activation=activation,
             )
             for i in range(1, 6)
@@ -107,6 +108,7 @@ class SRDescriminator(SRModel):
 
         # Build Tail
         tail_module = [
+            keras.layers.Flatten(),
             keras.layers.Dense(
                 1024,
                 name="tail_first_dense",
