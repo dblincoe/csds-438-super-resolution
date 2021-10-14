@@ -1,7 +1,6 @@
 from typing import Any
 import tensorflow as tf
 import tensorflow.keras as keras
-from tensorflow.keras import layers
 
 from models.common import (
     DescriminatorBlock,
@@ -10,10 +9,11 @@ from models.common import (
     UpSampler,
     convolution,
 )
+from models.sr_model import SRModel
 
 
-class SRResNet(tf.Module):
-    """Defines SRResNet module"""
+class SRResNet(SRModel):
+    """Defines SRResNet model"""
 
     def __init__(
         self,
@@ -22,7 +22,7 @@ class SRResNet(tf.Module):
         scale=4,
         conv_f: convolution = convolution,
     ):
-        super().__init__(name="sr-resnet-model")
+        super().__init__(name="sr_resnet_model")
 
         self.normalize = MeanShift()
         self.denormalize = MeanShift(sign=1)
@@ -37,7 +37,7 @@ class SRResNet(tf.Module):
                 n_features,
                 k_size=3,
                 norm=True,
-                name="body_resblock_{i}",
+                name=f"body_resblock_{i}",
                 activation=keras.layers.PReLU(),
             )
             for i in range(n_resblocks)
@@ -61,7 +61,7 @@ class SRResNet(tf.Module):
         self.body = keras.Sequential(layers=body_module, name="body")
         self.tail = keras.Sequential(layers=tail_module, name="tail")
 
-    def __call__(self, inputs) -> Any:
+    def call(self, inputs) -> Any:
         norm_head = self.normalize(inputs)
         head_result = self.head(norm_head)
 
@@ -74,7 +74,7 @@ class SRResNet(tf.Module):
         return denorm_tail
 
 
-class SRDescriminator(tf.Module):
+class SRDescriminator(SRModel):
     """Descriminator for SRGAN"""
 
     def __init__(
@@ -119,7 +119,7 @@ class SRDescriminator(tf.Module):
         self.body = keras.Sequential(layers=body_module, name="body")
         self.tail = keras.Sequential(layers=tail_module, name="tail")
 
-    def __call__(self, inputs) -> Any:
+    def call(self, inputs) -> Any:
         head_result = self.head(inputs)
 
         body_result = self.body(head_result)

@@ -1,12 +1,12 @@
 from typing import Any
 import tensorflow as tf
 import tensorflow.keras as keras
-from tensorflow.keras import layers
 
 from models.common import MeanShift, ResBlock, UpSampler, convolution
+from models.sr_model import SRModel
 
 
-class EDSR(tf.Module):
+class EDSR(SRModel):
     """Defines EDSR module"""
 
     def __init__(
@@ -16,7 +16,7 @@ class EDSR(tf.Module):
         scale=4,
         conv_f: convolution = convolution,
     ):
-        super().__init__(name="edsr-model")
+        super().__init__(name="edsr_model")
 
         k_size = 3
 
@@ -45,7 +45,7 @@ class EDSR(tf.Module):
         self.body = keras.Sequential(layers=body_module, name="body")
         self.tail = keras.Sequential(layers=tail_module, name="tail")
 
-    def __call__(self, inputs) -> Any:
+    def call(self, inputs) -> Any:
         norm_head = self.normalize(inputs)
         head_result = self.head(norm_head)
 
