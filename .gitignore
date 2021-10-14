@@ -137,3 +137,6 @@ ckpts/*
 
 # Ignore VS code launch
 launch.json
+
+# Ignore example output
+example-output/*
