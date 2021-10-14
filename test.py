@@ -40,7 +40,7 @@ hr_imgs = (hr_imgs.numpy() - 127.5) / 127.5
 lr_imgs = tf.convert_to_tensor(lr_imgs, np.float32)
 lr_imgs = (lr_imgs.numpy() - 127.5) / 127.5
 
-one = tf.convert_to_tensor([1], np.float32)
+one = tf.convert_to_tensor([1]*len(lr_imgs), np.float32)
 
 # Fit model
 sr_resnet_model.fit(
