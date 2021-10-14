@@ -2,7 +2,6 @@ from typing import Any, List
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
-from tensorflow.python.keras.layers.core import Lambda
 
 
 def convolution(
@@ -67,7 +66,7 @@ class ResBlock(tf.Module):
             if i == 0:
                 block_layers.append(activation)
 
-        self.block = keras.Sequential(*block_layers)
+        self.block = keras.Sequential(layers=block_layers)
         self.residual_scale = residual_scale
 
     def __call__(self, inputs) -> Any:
@@ -93,6 +92,16 @@ class MeanShift(keras.layers.Layer):
         return inputs + self.bias
 
 
+class PixelShuffler(keras.layers.Layer):
+    def __init__(self, factor: int, name: str = None) -> None:
+        super().__init__(name=name)
+
+        self.pixel_shuffler = lambda x: tf.nn.depth_to_space(x, factor)
+
+    def __call__(self, inputs) -> Any:
+        return self.pixel_shuffler(inputs)
+
+
 class UpSampler(keras.Sequential):
     """Defines a upsample sequence"""
 
@@ -106,15 +115,18 @@ class UpSampler(keras.Sequential):
         bias: bool = True,
         name: str = None,
     ):
-        def __upsample_base(l: List[keras.layers.Layer], factor: int):
+        def __upsample_base(l: List[keras.layers.Layer], factor: int, name: str = None):
             # TODO: Fix this convolution features size (Check this)
-            l.append(convolution((factor ** 2) * features, 3, bias=bias))
+            l.append(
+                convolution(
+                    (factor ** 2) * features, 3, bias=bias, name=f"{name}_convolution"
+                )
+            )
 
-            pixel_shuffler = lambda x: tf.nn.depth_to_space(x, factor)
-            l.append(Lambda(pixel_shuffler)())
+            l.append(PixelShuffler(factor=factor, name=f"{name}_pixel_shuffler"))
 
             if norm:
-                l.append(keras.layers.BatchNormalization())
+                l.append(keras.layers.BatchNormalization(name=f"{name}_normalization"))
 
             if activation:
                 l.append(activation)
@@ -122,7 +134,10 @@ class UpSampler(keras.Sequential):
             return l
 
         layers = []
-        if scale == 2:
+
+        if scale == 1:
+            pass
+        elif scale == 2:
             layers = __upsample_base(layers, factor=2, name="upsample_1_scale_2")
         elif scale == 3:
             layers = __upsample_base(layers, factor=3, name="upsample_1_scale_3")
