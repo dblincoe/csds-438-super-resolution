@@ -6,7 +6,6 @@ import numpy as np
 
 root_path = "/".join(os.path.abspath(__file__).split("/")[:-2])
 
-# TODO: Multiple image loads does not work
 def load_test_images() -> List[np.array]:
     """Load specifically files in 'test-images'
 
