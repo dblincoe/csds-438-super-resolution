@@ -1,0 +1,39 @@
+from datetime import datetime
+
+import os
+import numpy as np
+import tensorflow as tf
+import tensorflow.keras as keras
+from tensorflow.keras.losses import MeanAbsoluteError, MeanSquaredError
+
+from data.data_loaders import load_test_images
+from models.srgan import SRResNet
+from train import Trainer
+
+# Define the Keras TensorBoard callback.
+logdir = "logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
+
+# =========================#
+#  Testing Model Inference
+# =========================#
+
+# Create Model
+sr_resnet_model = SRResNet()
+sr_resnet_model.compile(
+    optimizer="adam", loss=MeanAbsoluteError(), metrics=["accuracy"]
+)
+sr_resnet_model.run_eagerly = True
+
+Trainer(sr_resnet_model, MeanSquaredError())
+
+# Load images
+hr_imgs = load_test_images()
+
+# Tensorize
+hr_imgs = tf.convert_to_tensor(hr_imgs, np.float32)
+hr_imgs = (hr_imgs.numpy() - 127.5) / 127.5
+
+sr_resnet_model.fit(
+    hr_imgs, hr_imgs, batch_size=1, epochs=1, callbacks=[tensorboard_callback]
+)
