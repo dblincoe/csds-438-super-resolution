@@ -8,6 +8,7 @@ from tensorflow.keras.losses import MeanAbsoluteError, MeanSquaredError
 
 from data.data_loaders import load_test_images
 from data.data_utils import downsample_images
+from models.edsr import EDSR
 from models.srgan import SRResNet
 from train import Trainer
 
@@ -20,7 +21,7 @@ tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir, write_graph=T
 # =========================#
 
 # Create Model
-sr_resnet_model = SRResNet()
+sr_resnet_model = EDSR()
 sr_resnet_model.compile(
     optimizer="adam", loss=MeanAbsoluteError(), metrics=["accuracy"]
 )

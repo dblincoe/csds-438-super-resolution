@@ -24,8 +24,6 @@ class Trainer:
             max_to_keep=2,
         )
 
-        self.checkpoint_mngr.save()
-
         self.rebuild()
 
     def rebuild(self):

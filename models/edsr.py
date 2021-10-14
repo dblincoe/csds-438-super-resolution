@@ -29,7 +29,7 @@ class EDSR(SRModel):
         # Build Body
         body_module = [
             ResBlock(
-                conv_f, n_features, k_size, residual_scale=0.1, name="body_resblock_{i}"
+                conv_f, n_features, k_size, residual_scale=0.1, name=f"body_resblock_{i}"
             )
             for i in range(n_resblocks)
         ]
