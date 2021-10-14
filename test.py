@@ -7,12 +7,13 @@ import tensorflow.keras as keras
 from tensorflow.keras.losses import MeanAbsoluteError, MeanSquaredError
 
 from data.data_loaders import load_test_images
+from data.data_utils import downsample_images
 from models.srgan import SRResNet
 from train import Trainer
 
 # Define the Keras TensorBoard callback.
 logdir = "logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
-tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
+tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir, write_graph=True)
 
 # =========================#
 #  Testing Model Inference
@@ -29,11 +30,16 @@ Trainer(sr_resnet_model, MeanSquaredError())
 
 # Load images
 hr_imgs = load_test_images()
+lr_imgs = downsample_images(hr_imgs, 4)
 
 # Tensorize
 hr_imgs = tf.convert_to_tensor(hr_imgs, np.float32)
 hr_imgs = (hr_imgs.numpy() - 127.5) / 127.5
 
+lr_imgs = tf.convert_to_tensor(lr_imgs, np.float32)
+lr_imgs = (lr_imgs.numpy() - 127.5) / 127.5
+
+# Fit model
 sr_resnet_model.fit(
-    hr_imgs, hr_imgs, batch_size=1, epochs=1, callbacks=[tensorboard_callback]
+    lr_imgs, hr_imgs, batch_size=1, epochs=2, callbacks=[tensorboard_callback]
 )
