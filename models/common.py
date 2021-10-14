@@ -7,7 +7,7 @@ import tensorflow.keras as keras
 def convolution(
     features: int, k_size: int, strides: int = 1, bias: bool = True, name: str = None
 ):
-    return keras.layers.Conv2D(features, k_size, strides, use_bias=bias, name=name)
+    return keras.layers.Conv2D(features, k_size, strides, use_bias=bias, padding="same", name=name)
 
 
 class DescriminatorBlock(tf.Module):
