@@ -9,8 +9,8 @@ from models.common import (
     ResBlock,
     UpSampler,
     convolution,
+    SRModel
 )
-from models.sr_model import SRModel
 
 
 class SRResNet(SRModel):

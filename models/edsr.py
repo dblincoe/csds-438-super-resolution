@@ -2,8 +2,7 @@ from typing import Any
 import tensorflow as tf
 import tensorflow.keras as keras
 
-from models.common import MeanShift, ResBlock, UpSampler, convolution
-from models.sr_model import SRModel
+from models.common import MeanShift, ResBlock, UpSampler, convolution, SRModel
 
 
 class EDSR(SRModel):

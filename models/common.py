@@ -10,6 +10,16 @@ def convolution(
     return keras.layers.Conv2D(features, k_size, strides, use_bias=bias, padding="same", name=name)
 
 
+class SRModel(keras.Model):
+    """Base Class for all of the modes"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def call(self, inputs, training=False):
+        raise NotImplementedError
+
+
 class DescriminatorBlock(tf.Module):
     """Defines a single descriminator block"""
 
