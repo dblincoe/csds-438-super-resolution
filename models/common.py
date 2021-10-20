@@ -4,15 +4,51 @@ import tensorflow as tf
 import tensorflow.keras as keras
 
 
-def convolution(
-    features: int, k_size: int, strides: int = 1, bias: bool = True, name: str = None
-):
-    return keras.layers.Conv2D(features, k_size, strides, use_bias=bias, padding="same", name=name)
+def convolution(features: int,
+                k_size: int,
+                strides: int = 1,
+                bias: bool = True,
+                name: str = None):
+    return keras.layers.Conv2D(features,
+                               k_size,
+                               strides,
+                               use_bias=bias,
+                               padding="same",
+                               name=name)
+
+
+# peak signal to noise ratio
+def psnr(x1, x2):
+    return tf.image.psnr(x1, x2, max_val=255)
+
+
+# run lr through the model and output sr
+def convert(model, lr):
+    lr = tf.cast(lr, tf.float32)
+    sr = model(lr)
+    sr = tf.clip_by_value(sr, 0, 255)
+    sr = tf.round(sr)
+    sr = tf.cast(sr, tf.uint8)
+    return sr
+
+
+# evaluate data using the input model
+def evaluate(model, data):
+    psnr_values = []
+    for lr, hr in data:
+        lr, hr = add_num_images(lr), add_num_images(hr)
+        sr = convert(model, hr)
+        psnr_value = psnr(lr, sr)[0]
+        psnr_values.append(psnr_value)
+    return tf.reduce_mean(psnr_values)
+
+
+def add_num_images(img):
+    return img.reshape(1, img.shape[0], img.shape[1], img.shape[2])
 
 
 class DescriminatorBlock(tf.Module):
     """Defines a single descriminator block"""
-
     def __init__(
         self,
         conv_f: convolution,
@@ -27,7 +63,8 @@ class DescriminatorBlock(tf.Module):
         super().__init__(name=name)
 
         block_layers = []
-        block_layers.append(conv_f(features, k_size, strides=strides, bias=bias))
+        block_layers.append(
+            conv_f(features, k_size, strides=strides, bias=bias))
 
         if norm:
             block_layers.append(keras.layers.BatchNormalization())
@@ -42,7 +79,6 @@ class DescriminatorBlock(tf.Module):
 
 class ResBlock(tf.Module):
     """Defines a single residual block"""
-
     def __init__(
         self,
         conv_f: convolution,
@@ -75,11 +111,11 @@ class ResBlock(tf.Module):
 
 class MeanShift(keras.layers.Layer):
     def __init__(
-        self,
-        rgb_mean=(0.4488, 0.4371, 0.4040),
-        rgb_std=(1.0, 1.0, 1.0),
-        sign=-1,
-        **kwargs,
+            self,
+            rgb_mean=(0.4488, 0.4371, 0.4040),
+            rgb_std=(1.0, 1.0, 1.0),
+            sign=-1,
+            **kwargs,
     ):
         # TODO: Check this
         super().__init__(**kwargs)
@@ -104,7 +140,6 @@ class PixelShuffler(keras.layers.Layer):
 
 class UpSampler(keras.Sequential):
     """Defines a upsample sequence"""
-
     def __init__(
         self,
         convolution: convolution,
@@ -115,18 +150,23 @@ class UpSampler(keras.Sequential):
         bias: bool = True,
         name: str = None,
     ):
-        def __upsample_base(l: List[keras.layers.Layer], factor: int, name: str = None):
+        def __upsample_base(l: List[keras.layers.Layer],
+                            factor: int,
+                            name: str = None):
             # TODO: Fix this convolution features size (Check this)
             l.append(
-                convolution(
-                    (factor ** 2) * features, 3, bias=bias, name=f"{name}_convolution"
-                )
-            )
+                convolution((factor**2) * features,
+                            3,
+                            bias=bias,
+                            name=f"{name}_convolution"))
 
-            l.append(PixelShuffler(factor=factor, name=f"{name}_pixel_shuffler"))
+            l.append(
+                PixelShuffler(factor=factor, name=f"{name}_pixel_shuffler"))
 
             if norm:
-                l.append(keras.layers.BatchNormalization(name=f"{name}_normalization"))
+                l.append(
+                    keras.layers.BatchNormalization(
+                        name=f"{name}_normalization"))
 
             if activation:
                 l.append(activation)
@@ -138,15 +178,22 @@ class UpSampler(keras.Sequential):
         if scale == 1:
             pass
         elif scale == 2:
-            layers = __upsample_base(layers, factor=2, name="upsample_1_scale_2")
+            layers = __upsample_base(layers,
+                                     factor=2,
+                                     name="upsample_1_scale_2")
         elif scale == 3:
-            layers = __upsample_base(layers, factor=3, name="upsample_1_scale_3")
+            layers = __upsample_base(layers,
+                                     factor=3,
+                                     name="upsample_1_scale_3")
         elif scale == 4:
-            layers = __upsample_base(layers, factor=2, name="upsample_1_scale_2")
-            layers = __upsample_base(layers, factor=2, name="upsample_3_scale_2")
+            layers = __upsample_base(layers,
+                                     factor=2,
+                                     name="upsample_1_scale_2")
+            layers = __upsample_base(layers,
+                                     factor=2,
+                                     name="upsample_3_scale_2")
         else:
             raise ValueError(
-                f"Scale must be either 2, 3, or 4. The set scale was: {scale}"
-            )
+                f"Scale must be either 2, 3, or 4. The set scale was: {scale}")
 
         super().__init__(layers=layers, name=name)
