@@ -67,8 +67,8 @@ class Trainer:
             lr, hr = tf.cast(lr, tf.float32), tf.cast(hr, tf.float32)
 
             # this should be lr going into model and hr in loss
-            sr = self.model(hr, training=True)
-            loss_value = self.loss(lr, sr)
+            sr = self.model(lr, training=True)
+            loss_value = self.loss(hr, sr)
 
         gradients = tape.gradient(loss_value, self.model.trainable_variables)
         self.optimizer.apply_gradients(
@@ -89,7 +89,7 @@ trainer = Trainer(model=EDSR(),
 hr_imgs = load_test_images()
 lr_imgs = downsample_images(hr_imgs, 4)
 dataset_size = len(hr_imgs)
-train_data = [(hr_imgs[x], lr_imgs[x]) for x in range(dataset_size - 1)]
-valid_data = [(hr_imgs[dataset_size - 1], lr_imgs[dataset_size - 1])]
+train_data = [(lr_imgs[x], hr_imgs[x]) for x in range(dataset_size - 1)]
+valid_data = [(lr_imgs[dataset_size - 1], hr_imgs[dataset_size - 1])]
 
 trainer.train(train_data, valid_data, 1000)

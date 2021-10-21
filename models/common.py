@@ -37,8 +37,8 @@ def evaluate(model, data):
     psnr_values = []
     for lr, hr in data:
         lr, hr = add_num_images(lr), add_num_images(hr)
-        sr = convert(model, hr)
-        psnr_value = psnr(lr, sr)[0]
+        sr = convert(model, lr)
+        psnr_value = psnr(hr, sr)[0]
         psnr_values.append(psnr_value)
     return tf.reduce_mean(psnr_values)
 
