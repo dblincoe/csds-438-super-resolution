@@ -1,9 +1,9 @@
 import os
 
-from models.edsr import EDSR
+# from models.edsr import EDSR
 from models.common import add_num_images, evaluate
-from data.data_loaders import load_test_images
-from data.data_utils import downsample_images
+from data.data_loaders import load_test_images, load_images_from_folder
+from data.data_utils import downsample_images, resize_images
 
 import tensorflow as tf
 from tensorflow.keras.losses import (
@@ -15,14 +15,14 @@ from tensorflow.keras.metrics import Mean
 from tensorflow.keras.optimizers.schedules import PiecewiseConstantDecay
 from tensorflow.keras.optimizers import Adam
 
-from models.sr_model import SRModel
+# from models.sr_model import SRModel
 from models.srgan import SRResNet
 from models.edsr import EDSR
 
 
 class Trainer:
     def __init__(self,
-                 model: SRModel,
+                 model: EDSR(),
                  loss: Loss,
                  learning_rate: None,
                  checkpoint_dir_base: str = "./ckpts/") -> None:
@@ -52,6 +52,7 @@ class Trainer:
             lr_img, hr_img = add_num_images(lr_img), add_num_images(hr_img)
             loss = self.train_step(lr_img, hr_img)
             loss_mean(loss)
+            print(loss_mean.result().numpy())
 
         # Compute PSNR on validation dataset
         psnr_value = evaluate(self.model, valid_data)
@@ -86,10 +87,21 @@ trainer = Trainer(model=EDSR(),
                   loss=MeanAbsoluteError(),
                   learning_rate=PiecewiseConstantDecay(boundaries=[200000],
                                                        values=[1e-4, 5e-5]))
-hr_imgs = load_test_images()
+# hr_imgs = load_test_images()
+# lr_imgs = downsample_images(hr_imgs, 4)
+# dataset_size = len(hr_imgs)
+# train_data = [(lr_imgs[x], hr_imgs[x]) for x in range(dataset_size - 1)]
+# valid_data = [(lr_imgs[dataset_size - 1], hr_imgs[dataset_size - 1])]
+
+# trainer.train(train_data, valid_data, 1000)
+
+hr_imgs = load_images_from_folder("train-data")
+hr_imgs = resize_images(hr_imgs, 200, 200)
+# hr_imgs = downsample_images(hr_imgs, 1)
 lr_imgs = downsample_images(hr_imgs, 4)
-dataset_size = len(hr_imgs)
-train_data = [(lr_imgs[x], hr_imgs[x]) for x in range(dataset_size - 1)]
-valid_data = [(lr_imgs[dataset_size - 1], hr_imgs[dataset_size - 1])]
+train_valid_split = int(0.8 * len(lr_imgs))
+train_data = [(lr_imgs[x], hr_imgs[x]) for x in range(train_valid_split)]
+valid_data = [(lr_imgs[x], hr_imgs[x])
+              for x in range(train_valid_split, len(lr_imgs))]
 
 trainer.train(train_data, valid_data, 1000)
