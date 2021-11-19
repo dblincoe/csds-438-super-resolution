@@ -140,3 +140,6 @@ launch.json
 
 # Ignore example output
 example-output/*
+
+# Ignore DS Store
+.DS_Store
