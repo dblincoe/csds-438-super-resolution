@@ -50,11 +50,13 @@ class Trainer:
         """Trains the model using a training and validation set"""
 
         for epoch in range(epochs):
+            # TODO: If the latest checkpoint is >= epochs save and break
             if self.checkpoint_mngr.latest_checkpoint:
                 pass
 
             loss_mean = Mean()
 
+            # TODO: Iterate over batches not individual images
             for lr_img, hr_img in train_data:
                 lr_img, hr_img = add_num_images(lr_img), add_num_images(hr_img)
                 
@@ -101,6 +103,7 @@ trainer = Trainer(model=SRResNet(),
                   learning_rate=PiecewiseConstantDecay(boundaries=[200000],
                                                        values=[1e-4, 5e-5]))
 
+# TODO: Augment training images by taking smaller swatches and rotating/flipping them
 hr_imgs = load_images_from_folder("train-data")
 hr_imgs = resize_images(hr_imgs, 200, 200)
 lr_imgs = downsample_images(hr_imgs, 4)
@@ -111,3 +114,5 @@ train_data = combined_data[:train_valid_split]
 valid_data = combined_data[train_valid_split:]
 
 trainer.train(train_data, valid_data, epochs=2)
+
+# TODO: Make a script that can load a model and evaluate/inference images
