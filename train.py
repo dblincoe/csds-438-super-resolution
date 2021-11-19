@@ -32,33 +32,39 @@ class Trainer:
 
         self.optimizer = Adam(learning_rate)
 
-        # self.checkpoint = tf.train.Checkpoint(model=model,
-        #                                       optimizer=Adam(learning_rate))
+        self.checkpoint = tf.train.Checkpoint(model=model,
+                                              optimizer=Adam(learning_rate))
 
-        # self.checkpoint_mngr = tf.train.CheckpointManager(
-        #     checkpoint=self.checkpoint,
-        #     directory=os.path.join(checkpoint_dir_base, str(type(model))),
-        #     max_to_keep=2,
-        # )
+        self.checkpoint_mngr = tf.train.CheckpointManager(
+            checkpoint=self.checkpoint,
+            directory=os.path.join(checkpoint_dir_base, model.name),
+            max_to_keep=2,
+        )
 
-        # self.rebuild()
+        self.rebuild()
 
-    def train(self, train_data, valid_data, num_steps):
+    def train(self, train_data, valid_data, epochs):
         """Trains the model using a training and validation set"""
-        loss_mean = Mean()
 
-        # run training steps on dataset in order to get loss
-        for lr_img, hr_img in train_data:
-            lr_img, hr_img = add_num_images(lr_img), add_num_images(hr_img)
-            loss = self.train_step(lr_img, hr_img)
-            loss_mean(loss)
-            print(loss_mean.result().numpy())
+        for epoch in range(epochs):
+            loss_mean = Mean()
+
+            for lr_img, hr_img in train_data:
+                lr_img, hr_img = add_num_images(lr_img), add_num_images(hr_img)
+                
+                loss = self.train_step(lr_img, hr_img)
+                loss_mean(loss)
+
+            self.checkpoint_mngr.save()
+
+            print(f"Epoch {epoch+1} loss: {loss_mean.result().numpy()}")
 
         # Compute PSNR on validation dataset
-        psnr_value = evaluate(self.model, valid_data)
+        psnr_value, ssim_value = evaluate(self.model, valid_data)
 
+        print("Done Training!")
         print(
-            f'loss = {loss_mean.result().numpy()}, PSNR = {psnr_value.numpy()}'
+            f'Final Metrics: Loss = {loss_mean.result().numpy()}, PSNR: {psnr_value.numpy()}, SSIM: {ssim_value.numpy()}'
         )
 
     @tf.function
@@ -87,21 +93,14 @@ trainer = Trainer(model=EDSR(),
                   loss=MeanAbsoluteError(),
                   learning_rate=PiecewiseConstantDecay(boundaries=[200000],
                                                        values=[1e-4, 5e-5]))
-# hr_imgs = load_test_images()
-# lr_imgs = downsample_images(hr_imgs, 4)
-# dataset_size = len(hr_imgs)
-# train_data = [(lr_imgs[x], hr_imgs[x]) for x in range(dataset_size - 1)]
-# valid_data = [(lr_imgs[dataset_size - 1], hr_imgs[dataset_size - 1])]
-
-# trainer.train(train_data, valid_data, 1000)
 
 hr_imgs = load_images_from_folder("train-data")
 hr_imgs = resize_images(hr_imgs, 200, 200)
-# hr_imgs = downsample_images(hr_imgs, 1)
 lr_imgs = downsample_images(hr_imgs, 4)
 train_valid_split = int(0.8 * len(lr_imgs))
-train_data = [(lr_imgs[x], hr_imgs[x]) for x in range(train_valid_split)]
-valid_data = [(lr_imgs[x], hr_imgs[x])
-              for x in range(train_valid_split, len(lr_imgs))]
 
-trainer.train(train_data, valid_data, 1000)
+combined_data = list(zip(lr_imgs, hr_imgs))
+train_data = combined_data[:train_valid_split]
+valid_data = combined_data[train_valid_split:]
+
+trainer.train(train_data, valid_data, epochs=10)

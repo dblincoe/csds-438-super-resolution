@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Tuple
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
@@ -16,10 +16,11 @@ def convolution(features: int,
                                padding="same",
                                name=name)
 
-
-# peak signal to noise ratio
 def psnr(x1, x2):
     return tf.image.psnr(x1, x2, max_val=255)
+
+def ssim(x1, x2):
+    return tf.image.ssim(x1,x2,max_val=255)
 
 
 # run lr through the model and output sr
@@ -33,14 +34,20 @@ def convert(model, lr):
 
 
 # evaluate data using the input model
-def evaluate(model, data):
+def evaluate(model: 'SRModel', data: List[Tuple[tf.Tensor, tf.Tensor]]) -> Tuple[float, float]:
+    """ Perform evaluation on the given model and return a tuple of psnr and ssim
+    """
     psnr_values = []
+    ssim_values = []
+
     for lr, hr in data:
         lr, hr = add_num_images(lr), add_num_images(hr)
+
         sr = convert(model, lr)
-        psnr_value = psnr(hr, sr)[0]
-        psnr_values.append(psnr_value)
-    return tf.reduce_mean(psnr_values)
+
+        ssim_values.append(ssim(hr, sr)[0])
+        psnr_values.append(psnr(hr, sr)[0])
+    return tf.reduce_mean(psnr_values), tf.reduce_mean(ssim_values)
 
 
 def add_num_images(img):
