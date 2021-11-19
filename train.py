@@ -25,7 +25,8 @@ class Trainer:
                  model: EDSR(),
                  loss: Loss,
                  learning_rate: None,
-                 checkpoint_dir_base: str = "./ckpts/") -> None:
+                 checkpoint_dir_base: str = "./ckpts/", 
+                 saved_model_dir_base: str = "./output/") -> None:
 
         self.model = model
         self.loss = loss
@@ -41,12 +42,17 @@ class Trainer:
             max_to_keep=2,
         )
 
+        self.saved_model_dir_base = saved_model_dir_base
+
         self.rebuild()
 
     def train(self, train_data, valid_data, epochs):
         """Trains the model using a training and validation set"""
 
         for epoch in range(epochs):
+            if self.checkpoint_mngr.latest_checkpoint:
+                pass
+
             loss_mean = Mean()
 
             for lr_img, hr_img in train_data:
@@ -67,10 +73,11 @@ class Trainer:
             f'Final Metrics: Loss = {loss_mean.result().numpy()}, PSNR: {psnr_value.numpy()}, SSIM: {ssim_value.numpy()}'
         )
 
+        self.model.save(os.join.path(self.saved_model_dir_base,self.model.name))
+
     @tf.function
     def train_step(self, lr, hr):
         with tf.GradientTape() as tape:
-
             lr, hr = tf.cast(lr, tf.float32), tf.cast(hr, tf.float32)
 
             # this should be lr going into model and hr in loss
@@ -89,7 +96,7 @@ class Trainer:
             self.checkpoint.restore(self.checkpoint_mngr.latest_checkpoint)
 
 
-trainer = Trainer(model=EDSR(),
+trainer = Trainer(model=SRResNet(),
                   loss=MeanAbsoluteError(),
                   learning_rate=PiecewiseConstantDecay(boundaries=[200000],
                                                        values=[1e-4, 5e-5]))
@@ -103,4 +110,4 @@ combined_data = list(zip(lr_imgs, hr_imgs))
 train_data = combined_data[:train_valid_split]
 valid_data = combined_data[train_valid_split:]
 
-trainer.train(train_data, valid_data, epochs=10)
+trainer.train(train_data, valid_data, epochs=2)

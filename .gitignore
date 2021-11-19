@@ -134,6 +134,7 @@ dmypy.json
 # Ignore Tensorflow Logs and Checkpoints
 logs/*
 ckpts/*
+output/*
 
 # Ignore VS code launch
 launch.json

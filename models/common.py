@@ -211,6 +211,6 @@ class UpSampler(keras.Sequential):
                                      name="upsample_3_scale_2")
         else:
             raise ValueError(
-                f"Scale must be either 2, 3, or 4. The set scale was: {scale}")
+                f"Scale must be between 1 and 4. The set scale was: {scale}")
 
         super().__init__(layers=layers, name=name)
