@@ -3,7 +3,7 @@ import os
 # from models.edsr import EDSR
 from models.common import add_num_images, evaluate
 from data.data_loaders import load_test_images, load_images_from_folder
-from data.data_utils import downsample_images, resize_images
+from data.data_utils import downsample_images, resize_images, rotate_images
 
 import tensorflow as tf
 from tensorflow.keras.losses import (
@@ -25,7 +25,7 @@ class Trainer:
                  model: EDSR(),
                  loss: Loss,
                  learning_rate: None,
-                 checkpoint_dir_base: str = "./ckpts/", 
+                 checkpoint_dir_base: str = "./ckpts/",
                  saved_model_dir_base: str = "./output/") -> None:
 
         self.model = model
@@ -49,17 +49,21 @@ class Trainer:
     def train(self, train_data, valid_data, epochs):
         """Trains the model using a training and validation set"""
 
+        # if the total number of runs is greater than epochs, save the model and exit
+        run = int(self.checkpoint_mngr.latest_checkpoint.split('-')[1])
+        if run > epochs:
+            self.model.save(
+                os.path.join(self.saved_model_dir_base, self.model.name))
+
+        # else:
         for epoch in range(epochs):
-            # TODO: If the latest checkpoint is >= epochs save and break
-            if self.checkpoint_mngr.latest_checkpoint:
-                pass
 
             loss_mean = Mean()
 
             # TODO: Iterate over batches not individual images
             for lr_img, hr_img in train_data:
                 lr_img, hr_img = add_num_images(lr_img), add_num_images(hr_img)
-                
+
                 loss = self.train_step(lr_img, hr_img)
                 loss_mean(loss)
 
@@ -75,22 +79,23 @@ class Trainer:
             f'Final Metrics: Loss = {loss_mean.result().numpy()}, PSNR: {psnr_value.numpy()}, SSIM: {ssim_value.numpy()}'
         )
 
-        self.model.save(os.join.path(self.saved_model_dir_base,self.model.name))
+        self.model.save(
+            os.path.join(self.saved_model_dir_base, self.model.name))
 
     @tf.function
     def train_step(self, lr, hr):
         with tf.GradientTape() as tape:
             lr, hr = tf.cast(lr, tf.float32), tf.cast(hr, tf.float32)
 
-            # this should be lr going into model and hr in loss
             sr = self.model(lr, training=True)
-            loss_value = self.loss(hr, sr)
+            step_loss = self.loss(hr, sr)
 
-        gradients = tape.gradient(loss_value, self.model.trainable_variables)
-        self.optimizer.apply_gradients(
-            zip(gradients, self.model.trainable_variables))
+            gradients = tape.gradient(step_loss,
+                                      self.model.trainable_variables)
+            self.optimizer.apply_gradients(
+                zip(gradients, self.model.trainable_variables))
 
-        return loss_value
+        return step_loss
 
     def rebuild(self):
         """Rebuilds the checkpoint"""
@@ -104,15 +109,25 @@ trainer = Trainer(model=SRResNet(),
                                                        values=[1e-4, 5e-5]))
 
 # TODO: Augment training images by taking smaller swatches and rotating/flipping them
-hr_imgs = load_images_from_folder("train-data")
-hr_imgs = resize_images(hr_imgs, 200, 200)
+load_hr_imgs = load_images_from_folder("train-data")
+orig_hr_imgs = resize_images(load_hr_imgs, 200, 200)
+hr_imgs = orig_hr_imgs
+for i in range(1, 4):
+    rotated_imgs = rotate_images(orig_hr_imgs, i)
+    hr_imgs = hr_imgs + rotated_imgs
+
 lr_imgs = downsample_images(hr_imgs, 4)
 train_valid_split = int(0.8 * len(lr_imgs))
 
 combined_data = list(zip(lr_imgs, hr_imgs))
 train_data = combined_data[:train_valid_split]
 valid_data = combined_data[train_valid_split:]
+batch_size = 10
 
-trainer.train(train_data, valid_data, epochs=2)
+for i in range(0, len(train_data), batch_size):
+    batch = train_data[i:i + batch_size]
+    trainer.train(batch, valid_data, epochs=9)
+
+# trainer.train(train_data, valid_data, epochs=3, batch_size=10)
 
 # TODO: Make a script that can load a model and evaluate/inference images

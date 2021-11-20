@@ -16,11 +16,13 @@ def convolution(features: int,
                                padding="same",
                                name=name)
 
+
 def psnr(x1, x2):
     return tf.image.psnr(x1, x2, max_val=255)
 
+
 def ssim(x1, x2):
-    return tf.image.ssim(x1,x2,max_val=255)
+    return tf.image.ssim(x1, x2, max_val=255)
 
 
 # run lr through the model and output sr
@@ -34,7 +36,8 @@ def convert(model, lr):
 
 
 # evaluate data using the input model
-def evaluate(model: 'SRModel', data: List[Tuple[tf.Tensor, tf.Tensor]]) -> Tuple[float, float]:
+def evaluate(model: 'SRModel',
+             data: List[Tuple[tf.Tensor, tf.Tensor]]) -> Tuple[float, float]:
     """ Perform evaluation on the given model and return a tuple of psnr and ssim
     """
     psnr_values = []
@@ -50,13 +53,12 @@ def evaluate(model: 'SRModel', data: List[Tuple[tf.Tensor, tf.Tensor]]) -> Tuple
     return tf.reduce_mean(psnr_values), tf.reduce_mean(ssim_values)
 
 
-def add_num_images(img):
-    return img.reshape(1, img.shape[0], img.shape[1], img.shape[2])
+def add_num_images(image):
+    return image.reshape(1, image.shape[0], image.shape[1], image.shape[2])
 
 
 class SRModel(keras.Model):
     """Base Class for all of the modes"""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

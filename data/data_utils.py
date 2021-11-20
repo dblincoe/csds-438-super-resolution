@@ -2,6 +2,7 @@ from typing import List
 
 import numpy as np
 from cv2 import cv2
+import tensorflow as tf
 
 
 def downsample_images(images: List[np.array], factor: int) -> List[np.array]:
@@ -38,3 +39,16 @@ def resize_images(images: List[np.array], width: int,
         List[np.array]: resized images
     """
     return [cv2.resize(image, (height, width)) for image in images]
+
+
+def rotate_images(images: List[np.array], k: int) -> List[np.array]:
+    """Takes list of high-res images and rotates them 90*k times
+
+    Args:
+        images (List[np.array]): list of images data
+        k (int): number of times to rotate 90 degrees
+
+    Returns:
+        List[np.array]: rotated images
+    """
+    return [tf.image.rot90(image, k=k).numpy() for image in images]
