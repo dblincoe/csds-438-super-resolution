@@ -5,7 +5,7 @@ This project houses code to train models to perform super resolution over images
 Given an installation of python >3.7 and updated pip, you should be able to run,
 `pip install -r requirements.txt`
 
-It is probably smart to do this inside of a virtual machine
+It is probably smart to do this inside of a virtual container
 
 ## Training a model
 To train a model the `train.py` script can be used. There are to current models that can be trained:
