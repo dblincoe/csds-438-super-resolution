@@ -82,7 +82,7 @@ class Trainer:
 
         self.model.save(os.path.join(self.saved_model_dir_base, self.model.save_name))
 
-    # @tf.function
+    @tf.function
     def train_step(self, lr, hr):
         with tf.GradientTape() as tape:
             lr, hr = tf.cast(lr, tf.float32), tf.cast(hr, tf.float32)
