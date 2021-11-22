@@ -1,4 +1,4 @@
-# CSDS 438: Super Resoltion
+# CSDS 438: Super Resolution
 This project houses code to train models to perform super resolution over images
 
 ## Installation
@@ -18,3 +18,16 @@ If you want to see the available training options you can run,
 ## Inferencing over test images
 This is still rudementary, but you can add folders to the `test-images` folder. You must have trained an EDSR model with scale `4` and created a folder named `example-output` in the root of the project directory. You can inference patches of the test images by running, 
 `python test.py`
+
+## Who supported this project
+David Blincoe
+    - Created Models
+    - Update Util Tools
+    - Created inference script
+
+Chris Toomey
+    - Implimented training loop
+    - Added image augmentation functions
+
+Paul Rodriguez
+    - Collected training data
