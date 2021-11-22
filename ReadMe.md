@@ -21,8 +21,8 @@ This is still rudementary, but you can add folders to the `test-images` folder. 
 
 ## Who supported this project
 - David Blincoe
-    - Created Models
-    - Update Util Tools
+    - Created models
+    - Updated util Tools
     - Created inference script
 
 - Chris Toomey
