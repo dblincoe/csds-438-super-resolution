@@ -4,17 +4,12 @@ import tensorflow as tf
 import tensorflow.keras as keras
 
 
-def convolution(features: int,
-                k_size: int,
-                strides: int = 1,
-                bias: bool = True,
-                name: str = None):
-    return keras.layers.Conv2D(features,
-                               k_size,
-                               strides,
-                               use_bias=bias,
-                               padding="same",
-                               name=name)
+def convolution(
+    features: int, k_size: int, strides: int = 1, bias: bool = True, name: str = None
+):
+    return keras.layers.Conv2D(
+        features, k_size, strides, use_bias=bias, padding="same", name=name
+    )
 
 
 def psnr(x1, x2):
@@ -36,10 +31,10 @@ def convert(model, lr):
 
 
 # evaluate data using the input model
-def evaluate(model: 'SRModel',
-             data: List[Tuple[tf.Tensor, tf.Tensor]]) -> Tuple[float, float]:
-    """ Perform evaluation on the given model and return a tuple of psnr and ssim
-    """
+def evaluate(
+    model: "SRModel", data: List[Tuple[tf.Tensor, tf.Tensor]]
+) -> Tuple[float, float]:
+    """Perform evaluation on the given model and return a tuple of psnr and ssim"""
     psnr_values = []
     ssim_values = []
 
@@ -59,15 +54,23 @@ def add_num_images(image):
 
 class SRModel(keras.Model):
     """Base Class for all of the modes"""
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, scale=4, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        self.scale = scale 
 
     def call(self, inputs, training=False):
         raise NotImplementedError
 
+    @property
+    def save_name(self):
+        return f"{self.name}-{self.scale}"
+
 
 class DescriminatorBlock(tf.Module):
     """Defines a single descriminator block"""
+
     def __init__(
         self,
         conv_f: convolution,
@@ -82,8 +85,7 @@ class DescriminatorBlock(tf.Module):
         super().__init__(name=name)
 
         block_layers = []
-        block_layers.append(
-            conv_f(features, k_size, strides=strides, bias=bias))
+        block_layers.append(conv_f(features, k_size, strides=strides, bias=bias))
 
         if norm:
             block_layers.append(keras.layers.BatchNormalization())
@@ -98,6 +100,7 @@ class DescriminatorBlock(tf.Module):
 
 class ResBlock(tf.Module):
     """Defines a single residual block"""
+
     def __init__(
         self,
         conv_f: convolution,
@@ -130,11 +133,11 @@ class ResBlock(tf.Module):
 
 class MeanShift(keras.layers.Layer):
     def __init__(
-            self,
-            rgb_mean=(0.4488, 0.4371, 0.4040),
-            rgb_std=(1.0, 1.0, 1.0),
-            sign=-1,
-            **kwargs,
+        self,
+        rgb_mean=(0.4488, 0.4371, 0.4040),
+        rgb_std=(1.0, 1.0, 1.0),
+        sign=-1,
+        **kwargs,
     ):
         # TODO: Check this
         super().__init__(**kwargs)
@@ -159,6 +162,7 @@ class PixelShuffler(keras.layers.Layer):
 
 class UpSampler(keras.Sequential):
     """Defines a upsample sequence"""
+
     def __init__(
         self,
         convolution: convolution,
@@ -169,23 +173,18 @@ class UpSampler(keras.Sequential):
         bias: bool = True,
         name: str = None,
     ):
-        def __upsample_base(l: List[keras.layers.Layer],
-                            factor: int,
-                            name: str = None):
+        def __upsample_base(l: List[keras.layers.Layer], factor: int, name: str = None):
             # TODO: Fix this convolution features size (Check this)
             l.append(
-                convolution((factor**2) * features,
-                            3,
-                            bias=bias,
-                            name=f"{name}_convolution"))
+                convolution(
+                    (factor ** 2) * features, 3, bias=bias, name=f"{name}_convolution"
+                )
+            )
 
-            l.append(
-                PixelShuffler(factor=factor, name=f"{name}_pixel_shuffler"))
+            l.append(PixelShuffler(factor=factor, name=f"{name}_pixel_shuffler"))
 
             if norm:
-                l.append(
-                    keras.layers.BatchNormalization(
-                        name=f"{name}_normalization"))
+                l.append(keras.layers.BatchNormalization(name=f"{name}_normalization"))
 
             if activation:
                 l.append(activation)
@@ -197,22 +196,15 @@ class UpSampler(keras.Sequential):
         if scale == 1:
             pass
         elif scale == 2:
-            layers = __upsample_base(layers,
-                                     factor=2,
-                                     name="upsample_1_scale_2")
+            layers = __upsample_base(layers, factor=2, name="upsample_1_scale_2")
         elif scale == 3:
-            layers = __upsample_base(layers,
-                                     factor=3,
-                                     name="upsample_1_scale_3")
+            layers = __upsample_base(layers, factor=3, name="upsample_1_scale_3")
         elif scale == 4:
-            layers = __upsample_base(layers,
-                                     factor=2,
-                                     name="upsample_1_scale_2")
-            layers = __upsample_base(layers,
-                                     factor=2,
-                                     name="upsample_3_scale_2")
+            layers = __upsample_base(layers, factor=2, name="upsample_1_scale_2")
+            layers = __upsample_base(layers, factor=2, name="upsample_3_scale_2")
         else:
             raise ValueError(
-                f"Scale must be between 1 and 4. The set scale was: {scale}")
+                f"Scale must be between 1 and 4. The set scale was: {scale}"
+            )
 
         super().__init__(layers=layers, name=name)
