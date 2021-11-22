@@ -20,14 +20,14 @@ This is still rudementary, but you can add folders to the `test-images` folder. 
 `python test.py`
 
 ## Who supported this project
-David Blincoe
+- David Blincoe
     - Created Models
     - Update Util Tools
     - Created inference script
 
-Chris Toomey
+- Chris Toomey
     - Implimented training loop
     - Added image augmentation functions
 
-Paul Rodriguez
+- Paul Rodriguez
     - Collected training data
