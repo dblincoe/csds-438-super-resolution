@@ -42,7 +42,7 @@ class Trainer:
 
         self.checkpoint_mngr = tf.train.CheckpointManager(
             checkpoint=self.checkpoint,
-            directory=os.path.join(checkpoint_dir_base, model.name),
+            directory=os.path.join(checkpoint_dir_base, model.save_name),
             max_to_keep=2,
         )
 
@@ -59,7 +59,7 @@ class Trainer:
             self.checkpoint_mngr.latest_checkpoint
             and int(self.checkpoint_mngr.latest_checkpoint.split("-")[1]) > epochs
         ):
-            self.model.save(os.path.join(self.saved_model_dir_base, self.model.name))
+            self.model.save(os.path.join(self.saved_model_dir_base, self.model.save_name))
             return
 
         for epoch in range(epochs):
@@ -80,7 +80,7 @@ class Trainer:
 
         print("Done Training!")
 
-        self.model.save(os.path.join(self.saved_model_dir_base, self.model.name))
+        self.model.save(os.path.join(self.saved_model_dir_base, self.model.save_name))
 
     # @tf.function
     def train_step(self, lr, hr):
