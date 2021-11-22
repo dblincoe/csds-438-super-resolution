@@ -110,7 +110,7 @@ class Trainer:
 @click.option("--scale", type=int, default=4)
 @click.option("--epochs", type=int, default=10)
 @click.option("--patch-size", type=int, default=100)
-@click.option("--max-patch-num", type=int, default=2)
+@click.option("--max-patch-num", type=int, default=100)
 @click.option("--fresh-run", is_flag=True)
 def main(model, scale, epochs, patch_size, max_patch_num, fresh_run):
     # Load, augment, and downsample images
