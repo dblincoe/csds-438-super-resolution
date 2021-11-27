@@ -55,17 +55,23 @@ def add_num_images(image):
 class SRModel(keras.Model):
     """Base Class for all of the modes"""
 
-    def __init__(self, scale=4, *args, **kwargs):
+    def __init__(self, scale=4, name_suffix="", *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.scale = scale 
+        self.scale = scale
+        self.name_suffix = name_suffix
 
     def call(self, inputs, training=False):
         raise NotImplementedError
 
     @property
     def save_name(self):
-        return f"{self.name}_{self.scale}"
+        temp_name = f"{self.name}_{self.scale}"
+
+        if self.name_suffix:
+            temp_name = f"{temp_name}_{self.name_suffix}"
+
+        return temp_name
 
 
 class DescriminatorBlock(tf.Module):

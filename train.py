@@ -111,25 +111,41 @@ class Trainer:
 @click.option("--epochs", type=int, default=10)
 @click.option("--patch-size", type=int, default=100)
 @click.option("--max-patch-num", type=int, default=100)
+@click.option("--batch-size", type=int, default=16)
+@click.option("--data-folder", type=str, default='data-default')
+@click.option("--name-suffix", type=str, default="")
+@click.option("--train-test-split", type=float, default=0.8)
 @click.option("--fresh-run", is_flag=True)
-def main(model, scale, epochs, patch_size, max_patch_num, fresh_run):
+def main(
+        model, 
+        scale, 
+        epochs, 
+        patch_size, 
+        max_patch_num, 
+        batch_size, 
+        data_folder, 
+        name_suffix,
+        train_test_split, 
+        fresh_run
+    ):
+
     # Load, augment, and downsample images
-    load_hr_imgs = load_images_from_folder("train-data")
+    load_hr_imgs = load_images_from_folder(data_folder)
     hr_imgs = augment_images(
         load_hr_imgs, patch_size=(patch_size, patch_size), max_patches=max_patch_num
     )
     lr_imgs = downsample_images(hr_imgs, scale)
     
     # Split and batch data
-    train_data, valid_data = split_train_valid_images(lr_imgs, hr_imgs)
-    batched_train_data = create_shuffled_batches(train_data)
+    train_data, valid_data = split_train_valid_images(lr_imgs, hr_imgs, train_test_split)
+    batched_train_data = create_shuffled_batches(train_data, batch_size)
 
     # Select Model
     if model == "edsr":
-        model_obj = EDSR(scale=scale)
+        model_obj = EDSR(scale=scale, name_suffix=name_suffix)
         loss = MeanAbsoluteError()
     elif model == 'srresnet':
-        model_obj = SRResNet(scale=scale)
+        model_obj = SRResNet(scale=scale, name_suffix=name_suffix)
         loss = MeanAbsoluteError()
     elif model == 'srgan':
         # TODO: Impliment this
