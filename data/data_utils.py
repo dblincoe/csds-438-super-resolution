@@ -18,7 +18,7 @@ def downsample_images(images: List[np.array], factor: int) -> List[np.array]:
     Returns:
         List[np.array]: downsampled images
     """
-    lr_patch_size = int(images[0][0] / factor)
+    lr_patch_size = int(images[0].shape[0] / factor)
 
     return (
         [ 
