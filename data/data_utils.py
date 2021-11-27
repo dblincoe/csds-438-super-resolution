@@ -18,15 +18,15 @@ def downsample_images(images: List[np.array], factor: int) -> List[np.array]:
     Returns:
         List[np.array]: downsampled images
     """
-    lr_images = []
+    lr_patch_size = int(images[0][0] / factor)
 
-    for image in images:
-        lr_image = cv2.resize(
-            image, (int(image.shape[1] / factor), int(image.shape[0] / factor))
-        )
-        lr_images.append(lr_image)
-
-    return lr_images
+    return (
+        [ 
+            cv2.resize(image, (lr_patch_size, lr_patch_size)) 
+            for image in images 
+        ]
+    )
+    
 
 
 def augment_images(images: List[np.array], patch_size=(100, 100), max_patches=100):
@@ -40,6 +40,9 @@ def augment_images(images: List[np.array], patch_size=(100, 100), max_patches=10
     Returns:
         List[np.array]: rotated images and patched images
     """
+    if patch_size[0] % 4 != 0:
+        raise ValueError("Please set patch size to be multiple of scale value (patch_size/scale = integer)")
+
     rotated_imgs = np.hstack([_rotate_images(images, i) for i in range(0, 4)])
     return _create_image_patches(
         rotated_imgs, patch_size=patch_size, max_patches=max_patches
