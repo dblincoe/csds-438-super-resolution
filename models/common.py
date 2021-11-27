@@ -65,7 +65,7 @@ class SRModel(keras.Model):
 
     @property
     def save_name(self):
-        return f"{self.name}-{self.scale}"
+        return f"{self.name}_{self.scale}"
 
 
 class DescriminatorBlock(tf.Module):

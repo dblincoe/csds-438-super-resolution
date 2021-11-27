@@ -57,7 +57,7 @@ class Trainer:
         # if the total number of runs is greater than epochs, save the model and exit
         if (
             self.checkpoint_mngr.latest_checkpoint
-            and int(self.checkpoint_mngr.latest_checkpoint.split("-")[1]) > epochs
+            and int(self.checkpoint_mngr.latest_checkpoint.split("-")[-1]) > epochs
         ):
             self.model.save(os.path.join(self.saved_model_dir_base, self.model.save_name))
             return
