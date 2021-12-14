@@ -14,8 +14,9 @@ class EDSR(SRModel):
         n_features=64,
         scale=4,
         conv_f: convolution = convolution,
+        name_suffix = ""
     ):
-        super().__init__(name="edsr_model")
+        super().__init__(name="edsr_model", name_suffix=name_suffix)
 
         k_size = 3
 

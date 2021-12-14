@@ -22,8 +22,9 @@ class SRResNet(SRModel):
         n_features=64,
         scale=4,
         conv_f: convolution = convolution,
+        name_suffix = ""
     ):
-        super().__init__(name="sr_resnet_model")
+        super().__init__(name="sr_resnet_model", name_suffix = "")
 
         self.normalize = MeanShift()
         self.denormalize = MeanShift(sign=1)
